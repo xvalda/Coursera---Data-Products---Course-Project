@@ -1,0 +1,91 @@
+---
+title: "Data Products - Course Project - Linear Regression for MTCARS"
+author: "XVALDA"
+date: "30 July 2017"
+output: ioslides_presentation
+---
+
+## Overview
+
+This shiny application is developed within the scope of the final project of the Coursera "Developing Data Products" course. 
+
+The project consists of two parts:   
+- a shiny application deployed on R Studio servers  
+- a pitch presentation  
+
+
+The code is available on Github: https://github.com/xvalda/Coursera---Data-Products---Course-Project
+
+The shiny application can be viewed here: https://xvalda.shinyapps.io/dataproductscourseproject/   
+
+
+## Project summary
+
+This is a very basic project, proposing to draw a linear regression between one regressor and one outcome.  
+For each configuration we also display the intercept, the slope and the R-squared value of the linear model.  
+
+The user can choose any variable as the outcome or the regressor.  
+
+**Data**
+We use the [mtcars](https://stat.ethz.ch/R-manual/R-devel/library/datasets/html/mtcars.html) dataset in R.  
+
+## Application - ui.R {.smaller}
+<small>
+```{r eval=FALSE, echo=TRUE}
+library(shiny)
+shinyUI(fluidPage(
+    titlePanel(HTML("Linear relations between variables of the mtcars dataset")),
+    # user inputs requested predictor and outcome
+    sidebarLayout(
+        sidebarPanel(
+            h3("Choose a predictor (X-axis): "),
+            selectInput("inputPredictor", label = NULL, choices = c("Displacement"="disp", "Cylinders"="cyl",
+            "Miles per Gallon"="mpg", "Horsepower"="hp", "Rear Axle Ratio"="drat",
+            "Weight"="wt", "1/4 Mile Time"="qsec", "vs"="vs",
+            "Transmission"="am", "Gears"="gear", "Carburator"="carb")),
+            h3("Choose the outcome variable (Y-axis): "),
+            selectInput("inputOutcome", label = NULL, choices = c("Miles per Gallon"="mpg", "Cylinders"="cyl", "Displacement"="disp", "Horsepower"="hp", "Rear Axle Ratio"="drat", "Weight"="wt", "1/4 Mile Time"="qsec", "vs"="vs", "Transmission"="am", "Gears"="gear", "Carburator"="carb")),
+            #show in side pane the intercept, slope and R-Squared
+            h3("Intercept"),
+            textOutput("interceptOut"),
+            h3("Slope"),
+            textOutput("slopeOut"),
+            h3("R-Squared"),
+            textOutput("rsquaredtOut")
+            ),
+        # Plot the liner model
+        mainPanel(
+            plotOutput("plotLM")
+            )
+        )
+    ))
+```
+</small>
+
+## Application - server.R {.smaller}
+
+```{r eval=FALSE, echo=TRUE}
+library(shiny)
+data("mtcars")
+shinyServer(function(input, output, session) {
+    # PLOT
+    fit <- reactive({
+        lm(mtcars[,input$inputOutcome]~mtcars[,input$inputPredictor])
+    })
+    output$plotLM <- renderPlot({
+        plot(mtcars[,input$inputPredictor], mtcars[,input$inputOutcome],
+             xlab=input$inputPredictor, ylab=input$inputOutcome, cex = 1.5, pch = 16)
+        abline(lm(mtcars[,input$inputOutcome]~mtcars[,input$inputPredictor]), col = "red", lwd = 2)
+    })
+    output$interceptOut <- renderText({
+        summary(lm(mtcars[,input$inputOutcome]~mtcars[,input$inputPredictor]))$coef[1,1]
+    })
+    output$slopeOut <- renderText({
+        summary(lm(mtcars[,input$inputOutcome]~mtcars[,input$inputPredictor]))$coef[2,1]
+    })
+    output$rsquaredtOut <- renderText({
+        summary(lm(mtcars[,input$inputOutcome]~mtcars[,input$inputPredictor]))$r.squared
+    })
+})
+```
+
